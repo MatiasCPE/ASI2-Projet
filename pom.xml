@@ -14,5 +14,6 @@
         <module>text-generation-service</module>
         <module>property-calculation-service</module>
         <module>request-management-service</module>
+        <module>backend</module>
     </modules>
 </project>
