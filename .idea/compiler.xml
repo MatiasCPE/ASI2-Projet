@@ -10,11 +10,13 @@
         <module name="property-calculation-service" />
         <module name="text-generation-service" />
         <module name="image-generation-service" />
+        <module name="backend" />
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="backend" options="-parameters" />
       <module name="image-generation-service" options="-parameters" />
       <module name="property-calculation-service" options="-parameters" />
       <module name="request-management-service" options="-parameters" />
