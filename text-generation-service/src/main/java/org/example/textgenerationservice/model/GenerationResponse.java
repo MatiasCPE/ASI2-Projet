@@ -1,4 +1,4 @@
-package org.example.textgenerationservice.dto;
+package org.example.textgenerationservice.model;
 
 public class GenerationResponse {
     private String generatedText;
