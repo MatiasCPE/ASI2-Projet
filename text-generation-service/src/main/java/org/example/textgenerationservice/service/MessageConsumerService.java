@@ -48,7 +48,7 @@ public class MessageConsumerService {
     private void sendToOrchestrator(String requestId, String generatedText) {
         // Crée l'URL complète de l'orchestrateur en utilisant le endpoint pour recevoir les données
         webClient.post()
-                .uri(orchestratorUrl + "/api/v1/receive-generated-text")
+                .uri(orchestratorUrl + "/api/v1/receive-generated-text") // URL de l'orchestrateur à définir
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(new OrchestratorRequest(requestId, generatedText))
                 .retrieve()

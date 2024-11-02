@@ -11,13 +11,13 @@ public class TextGenerationService {
     private final WebClient webClient;
 
     public TextGenerationService() {
-        this.webClient = WebClient.builder().baseUrl("http://ollama-server-url").build();
+        this.webClient = WebClient.builder().baseUrl("http://localhost:11434").build();
     }
 
     public GenerationResponse generateText(GenerationRequest request) {
         // Exécution de la génération du texte en appelant Ollama
         String result = webClient.post()
-                .uri("/generate")
+                .uri("/api/generate")
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(String.class)

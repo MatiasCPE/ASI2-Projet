@@ -9,13 +9,13 @@ public class ImageGenerationService {
     private final WebClient webClient;
 
     public ImageGenerationService() {
-        this.webClient = WebClient.builder().baseUrl("http://ollama-server-url").build();
+        this.webClient = WebClient.builder().baseUrl("http://localhost:8080").build();
     }
 
     public GenerationResponse generateImage(GenerationRequest request) {
         // Exécution de la génération d'image en appelant Neural Love
         String result = webClient.post()
-                .uri("/generate")
+                .uri("/prompt/req")
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(String.class)

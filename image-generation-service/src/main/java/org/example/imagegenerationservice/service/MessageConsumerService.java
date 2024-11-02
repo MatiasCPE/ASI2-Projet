@@ -30,7 +30,7 @@ public class MessageConsumerService {
 
             // Appel à Neural Love pour générer l'image
             String generatedImage = webClient.post()
-                    .uri("/api/generate")
+                    .uri("/prompt/req")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(new NeuralLovePromptRequest(request.getPrompt()))
                     .retrieve()
