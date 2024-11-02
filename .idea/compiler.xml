@@ -9,13 +9,15 @@
         <module name="request-management-service" />
         <module name="property-calculation-service" />
         <module name="text-generation-service" />
-        <module name="image-generation-service" />
         <module name="backend" />
+        <module name="image-generation-service" />
+        <module name="asi2-backendmarket-monolithic-student" />
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="asi2-backendmarket-monolithic-student" options="-parameters" />
       <module name="backend" options="-parameters" />
       <module name="image-generation-service" options="-parameters" />
       <module name="property-calculation-service" options="-parameters" />
