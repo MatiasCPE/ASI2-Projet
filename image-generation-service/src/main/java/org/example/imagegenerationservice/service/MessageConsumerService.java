@@ -29,6 +29,7 @@ public class MessageConsumerService {
     }
 
     @JmsListener(destination = "imageGenerationQueue")
+
     public void consumeMessage(String messageJson) {
         try {
             // Utilisez la classe correcte ici
@@ -38,6 +39,7 @@ public class MessageConsumerService {
 
             // Log the request body
             System.out.println("Sending to Neural Love: " + objectMapper.writeValueAsString(promptRequest));
+
 
             // Appel à Neural Love pour générer l'image
             String generatedImage = webClient.post()
@@ -67,15 +69,16 @@ public class MessageConsumerService {
         }
     }
 
-    private void sendToOrchestrator(String requestId, String generatedImage) {
-        // Crée l'URL complète de l'orchestrateur en utilisant le endpoint pour recevoir les données
+    public void sendToOrchestrator(String requestId, String generatedImage) {
+        // Crée l'URL complète de l'orchestrateur en utilisant le endpoint pour recevoir
+        // les données
         webClient.post()
-                .uri(orchestratorUrl + "/api/v1/receive-generated-image")
+                .uri(orchestratorUrl + "/response/image")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(new OrchestratorRequest(requestId, generatedImage))
                 .retrieve()
                 .bodyToMono(Void.class)
-                .block();  // Synchrone ici, peut être asynchrone si nécessaire
+                .block(); // Synchrone ici, peut être asynchrone si nécessaire
     }
 
     // Classe interne pour formater la requête vers l'orchestrateur
