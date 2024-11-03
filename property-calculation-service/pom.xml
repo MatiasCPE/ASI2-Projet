@@ -40,6 +40,16 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>de.androidpit</groupId>
+            <artifactId>colorToproperties</artifactId>
+            <version>1.1.2</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../libs/colorToproperties-1.1.2.jar</systemPath>
+        </dependency>
+
+
     </dependencies>
 
     <build>

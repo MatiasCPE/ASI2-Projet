@@ -1,6 +1,6 @@
 package org.example.imagegenerationservice;
 
-import org.example.imagegenerationservice.model.GenerationRequest;
+import org.example.imagegenerationservice.model.ImageGenerationRequest;
 import org.example.imagegenerationservice.service.MessageQueueService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -24,7 +24,7 @@ public class ImageGenerationServiceApplication implements CommandLineRunner {
         String prompt = "Image for a card of a fictional Pokémon whose characteristics you are free to invent, 100 words maximum";
 
         // Crée une requête et l'envoie dans la file d'attente ActiveMQ
-        GenerationRequest request = new GenerationRequest();
+        ImageGenerationRequest request = new ImageGenerationRequest();
         request.setRequestId(requestId);
         request.setPrompt(prompt);
 

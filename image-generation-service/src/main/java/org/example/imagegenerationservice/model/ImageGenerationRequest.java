@@ -1,11 +1,15 @@
 package org.example.imagegenerationservice.model;
 
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+
 import java.io.Serializable;
 
-public class GenerationRequest implements Serializable {
-    private static final long serialVersionUID = 1L;
-
+public class ImageGenerationRequest implements Serializable {
+    @NotNull
     private String requestId;
+
+    @NotEmpty
     private String prompt;
 
     // Getters et Setters
