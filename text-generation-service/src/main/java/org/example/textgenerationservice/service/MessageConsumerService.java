@@ -24,9 +24,10 @@ public class MessageConsumerService {
     }
 
     @JmsListener(destination = "textGenerationQueue")
-    public void consumeMessage(String messageJson) {  // Recevoir JSON sous forme de String
+    public void consumeMessage(String messageJson) { // Recevoir JSON sous forme de String
         try {
-            GenerationRequest request = objectMapper.readValue(messageJson, GenerationRequest.class);  // Conversion JSON vers objet
+            GenerationRequest request = objectMapper.readValue(messageJson, GenerationRequest.class); // Conversion JSON
+                                                                                                      // vers objet
 
             // Appel à Ollama pour générer le texte
             String generatedText = webClient.post()
@@ -45,15 +46,16 @@ public class MessageConsumerService {
         }
     }
 
-    private void sendToOrchestrator(String requestId, String generatedText) {
-        // Crée l'URL complète de l'orchestrateur en utilisant le endpoint pour recevoir les données
+    public void sendToOrchestrator(String requestId, String generatedText) {
+        // Crée l'URL complète de l'orchestrateur en utilisant le endpoint pour recevoir
+        // les données
         webClient.post()
-                .uri(orchestratorUrl + "/api/v1/receive-generated-text") // URL de l'orchestrateur à définir
+                .uri(orchestratorUrl + "/response/text") // URL de l'orchestrateur à définir
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(new OrchestratorRequest(requestId, generatedText))
                 .retrieve()
                 .bodyToMono(Void.class)
-                .block();  // Synchrone ici, peut être asynchrone si nécessaire
+                .block(); // Synchrone ici, peut être asynchrone si nécessaire
     }
 
     // Classe interne pour formater la requête vers l'orchestrateur

@@ -50,11 +50,11 @@ public class MessageConsumerService {
         }
     }
 
-    private void sendToOrchestrator(String requestId, String generatedImage) {
+    public void sendToOrchestrator(String requestId, String generatedImage) {
         // Crée l'URL complète de l'orchestrateur en utilisant le endpoint pour recevoir
         // les données
         webClient.post()
-                .uri(orchestratorUrl + "/api/v1/receive-generated-image")
+                .uri(orchestratorUrl + "/response/image")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(new OrchestratorRequest(requestId, generatedImage))
                 .retrieve()
