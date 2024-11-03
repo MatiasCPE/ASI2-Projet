@@ -1,6 +1,6 @@
 package org.example.imagegenerationservice;
 
-import org.example.imagegenerationservice.model.GenerationRequest;
+import org.example.imagegenerationservice.model.ImageGenerationRequest;
 import org.example.imagegenerationservice.service.MessageQueueService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -20,5 +20,12 @@ public class ImageGenerationServiceApplication implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
+        // Crée une requête et l'envoie dans la file d'attente ActiveMQ
+        ImageGenerationRequest request = new ImageGenerationRequest();
+        request.setRequestId(requestId);
+        request.setPrompt(prompt);
+
+        System.out.println("Sending message to ActiveMQ with Request ID: " + requestId);
+        messageQueueService.sendMessageToQueue(request);
     }
 }

@@ -1,6 +1,6 @@
 package org.example.imagegenerationservice.service;
 
-import org.example.imagegenerationservice.model.GenerationRequest;
+import org.example.imagegenerationservice.model.ImageGenerationRequest;
 import org.example.imagegenerationservice.model.GenerationResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -13,7 +13,7 @@ public class ImageGenerationService {
         this.webClient = WebClient.builder().baseUrl("http://localhost:8080").build();
     }
 
-    public GenerationResponse generateImageTest(GenerationRequest request) {
+    public GenerationResponse generateImage(ImageGenerationRequest request) {
         // Exécution de la génération d'image en appelant Neural Love
         String result = webClient.post()
                 .uri("/prompt/req")

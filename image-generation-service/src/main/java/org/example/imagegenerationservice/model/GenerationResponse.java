@@ -1,19 +1,18 @@
 package org.example.imagegenerationservice.model;
 
 public class GenerationResponse {
-    private String generatedText;
+    private String imageUrl;
 
-    public GenerationResponse(String generatedText) {
-        this.generatedText = generatedText;
+    public GenerationResponse(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     // Getters et Setters
-
-    public String getGeneratedText() {
-        return generatedText;
+    public String getImageUrl() {
+        return imageUrl;
     }
 
-    public void setGeneratedText(String generatedText) {
-        this.generatedText = generatedText;
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 }

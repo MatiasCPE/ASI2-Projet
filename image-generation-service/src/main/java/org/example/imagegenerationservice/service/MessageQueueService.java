@@ -1,8 +1,8 @@
 package org.example.imagegenerationservice.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.example.imagegenerationservice.model.GenerationRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.example.imagegenerationservice.model.ImageGenerationRequest;
+
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +17,7 @@ public class MessageQueueService {
         this.objectMapper = objectMapper;
     }
 
-    public void sendMessageToQueue(GenerationRequest request) {
+    public void sendMessageToQueue(ImageGenerationRequest request) {
         try {
             String messageJson = objectMapper.writeValueAsString(request);  // Conversion en JSON
             jmsTemplate.convertAndSend("imageGenerationQueue", messageJson);

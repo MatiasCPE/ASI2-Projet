@@ -1,17 +1,15 @@
 package org.example.imagegenerationservice.service;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.example.imagegenerationservice.model.GenerationRequest;
+import org.example.imagegenerationservice.model.ImageGenerationRequest;
+import org.example.imagegenerationservice.model.NeuralLovePromptRequest;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 @Service
 public class MessageConsumerService {
@@ -22,30 +20,51 @@ public class MessageConsumerService {
     @Value("${orchestrator.url}")
     private String orchestratorUrl;
 
-    public MessageConsumerService(ObjectMapper objectMapper) {
-        this.webClient = WebClient.builder().baseUrl("http://localhost:8080").build();// Neural Love API base URL
+    @Value("${neural.love.api.url}")
+    private String neuralLoveApiUrl;
+
+    public MessageConsumerService(ObjectMapper objectMapper, @Value("${neural.love.api.url}") String neuralLoveApiUrl) {
+        this.webClient = WebClient.builder().baseUrl(neuralLoveApiUrl).build();
         this.objectMapper = objectMapper;
     }
 
     @JmsListener(destination = "imageGenerationQueue")
-    public void consumeMessage(String messageJson) { // Recevoir JSON sous forme de String
+
+    public void consumeMessage(String messageJson) {
         try {
-            GenerationRequest request = objectMapper.readValue(messageJson, GenerationRequest.class); // Conversion JSON
-                                                                                                      // vers objet
+            // Utilisez la classe correcte ici
+            ImageGenerationRequest request = objectMapper.readValue(messageJson, ImageGenerationRequest.class);
+
+            NeuralLovePromptRequest promptRequest = new NeuralLovePromptRequest(request.getPrompt());
+
+            // Log the request body
+            System.out.println("Sending to Neural Love: " + objectMapper.writeValueAsString(promptRequest));
+
 
             // Appel à Neural Love pour générer l'image
             String generatedImage = webClient.post()
                     .uri("/prompt/req")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(new NeuralLovePromptRequest(request.getPrompt()))
+                    .bodyValue(promptRequest)
                     .retrieve()
+                    .onStatus(status -> status.isError(), clientResponse -> {
+                        return clientResponse.bodyToMono(String.class)
+                                .flatMap(errorBody -> {
+                                    System.err.println("Neural Love API Error: " + errorBody);
+                                    return Mono.error(new RuntimeException("Neural Love API Error: " + errorBody));
+                                });
+                    })
                     .bodyToMono(String.class)
                     .block();
 
             // Affichage du résultat
             System.out.println("Generated Image: " + generatedImage);
 
+            // Envoi à l'orchestrateur
+            sendToOrchestrator(request.getRequestId(), generatedImage);
+
         } catch (Exception e) {
+            System.err.println("Erreur lors de la consommation du message : " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -72,24 +91,21 @@ public class MessageConsumerService {
             this.generatedImage = generatedImage;
         }
 
-        // Getters et Setters (peuvent être ajoutés si nécessaire)
-    }
-
-    // Classe interne pour formater la requête vers Ollama
-    private static class NeuralLovePromptRequest {
-        @JsonProperty("promptTxt")
-        private String promptTxt;
-
-        @JsonProperty("negativePromptTxt")
-        private String negativePromptTxt;
-
-        // Constructeur par défaut requis pour la sérialisation
-        public NeuralLovePromptRequest() {
+        // Getters et Setters
+        public String getRequestId() {
+            return requestId;
         }
 
-        public NeuralLovePromptRequest(String promptTxt) {
-            this.promptTxt = promptTxt;
-            this.negativePromptTxt = "";
+        public void setRequestId(String requestId) {
+            this.requestId = requestId;
+        }
+
+        public String getGeneratedImage() {
+            return generatedImage;
+        }
+
+        public void setGeneratedImage(String generatedImage) {
+            this.generatedImage = generatedImage;
         }
     }
 }
