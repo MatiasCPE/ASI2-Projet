@@ -2,6 +2,10 @@ package org.example.imagegenerationservice.service;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.example.imagegenerationservice.model.GenerationRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -24,9 +28,10 @@ public class MessageConsumerService {
     }
 
     @JmsListener(destination = "imageGenerationQueue")
-    public void consumeMessage(String messageJson) {  // Recevoir JSON sous forme de String
+    public void consumeMessage(String messageJson) { // Recevoir JSON sous forme de String
         try {
-            GenerationRequest request = objectMapper.readValue(messageJson, GenerationRequest.class);  // Conversion JSON vers objet
+            GenerationRequest request = objectMapper.readValue(messageJson, GenerationRequest.class); // Conversion JSON
+                                                                                                      // vers objet
 
             // Appel à Neural Love pour générer l'image
             String generatedImage = webClient.post()
@@ -46,14 +51,15 @@ public class MessageConsumerService {
     }
 
     private void sendToOrchestrator(String requestId, String generatedImage) {
-        // Crée l'URL complète de l'orchestrateur en utilisant le endpoint pour recevoir les données
+        // Crée l'URL complète de l'orchestrateur en utilisant le endpoint pour recevoir
+        // les données
         webClient.post()
                 .uri(orchestratorUrl + "/api/v1/receive-generated-image")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(new OrchestratorRequest(requestId, generatedImage))
                 .retrieve()
                 .bodyToMono(Void.class)
-                .block();  // Synchrone ici, peut être asynchrone si nécessaire
+                .block(); // Synchrone ici, peut être asynchrone si nécessaire
     }
 
     // Classe interne pour formater la requête vers l'orchestrateur
