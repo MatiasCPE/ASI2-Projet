@@ -1,7 +1,7 @@
 package org.example.imagegenerationservice.controller;
 
-import org.example.imagegenerationservice.model.ImageGenerationRequest;
 
+import org.example.imagegenerationservice.model.ImageGenerationRequest;
 import org.example.imagegenerationservice.service.MessageQueueService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 public class ImageGenerationController {
 
     @Autowired
-    private MessageQueueService messageQueueService;
+    private MessageConsumerService messageConsumerService;
 
     @PostMapping
     public ResponseEntity<String> receiveImageGenerationRequest(@Validated @RequestBody ImageGenerationRequest request) {

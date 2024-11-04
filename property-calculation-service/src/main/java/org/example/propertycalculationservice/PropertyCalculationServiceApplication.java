@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class PropertyCalculationServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(PropertyCalculationServiceApplication.class, args);
+        // SpringApplication.run(PropertyCalculationServiceApplication.class, args);
     }
 
 }
