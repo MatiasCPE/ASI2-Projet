@@ -15,7 +15,7 @@ public class ImageGenerationService {
     public GenerationResponse generateImage(ImageGenerationRequest request) {
         // Exécution de la génération d'image en appelant Neural Love
         String result = webClient.post()
-                .uri("/prompt/req")
+                .uri("/fake/prompt/req")
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(String.class)

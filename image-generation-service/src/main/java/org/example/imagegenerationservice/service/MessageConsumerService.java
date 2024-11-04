@@ -3,10 +3,12 @@ package org.example.imagegenerationservice.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.imagegenerationservice.model.ImageGenerationRequest;
 import org.example.imagegenerationservice.model.NeuralLovePromptRequest;
+import org.example.propertycalculationservice.model.ImageProcessedMessage; // Assurez-vous d'importer cette classe
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.jms.annotation.JmsListener;
+import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -16,6 +18,9 @@ public class MessageConsumerService {
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
+
+    @Autowired
+    private JmsTemplate jmsTemplate;
 
     @Value("${orchestrator.url}")
     private String orchestratorUrl;
@@ -31,17 +36,17 @@ public class MessageConsumerService {
     @JmsListener(destination = "imageGenerationQueue")
     public void consumeMessage(String messageJson) {
         try {
-            // Utilisez la classe correcte ici
+            // Désérialiser la requête
             ImageGenerationRequest request = objectMapper.readValue(messageJson, ImageGenerationRequest.class);
 
             NeuralLovePromptRequest promptRequest = new NeuralLovePromptRequest(request.getPrompt());
 
-            // Log the request body
+            // Journaliser la requête
             System.out.println("Sending to Neural Love: " + objectMapper.writeValueAsString(promptRequest));
 
             // Appel à Neural Love pour générer l'image
             String generatedImage = webClient.post()
-                    .uri("/prompt/req")
+                    .uri("/fake/prompt/req")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(promptRequest)
                     .retrieve()
@@ -61,6 +66,9 @@ public class MessageConsumerService {
             // Envoi à l'orchestrateur
             sendToOrchestrator(request.getRequestId(), generatedImage);
 
+            // Notifier que l'image a été générée
+            notifyImageGenerated(request.getRequestId(), generatedImage);
+
         } catch (Exception e) {
             System.err.println("Erreur lors de la consommation du message : " + e.getMessage());
             e.printStackTrace();
@@ -68,17 +76,33 @@ public class MessageConsumerService {
     }
 
     private void sendToOrchestrator(String requestId, String generatedImage) {
-        // Crée l'URL complète de l'orchestrateur en utilisant le endpoint pour recevoir les données
         webClient.post()
                 .uri(orchestratorUrl + "/api/v1/receive-generated-image")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(new OrchestratorRequest(requestId, generatedImage))
                 .retrieve()
                 .bodyToMono(Void.class)
-                .block();  // Synchrone ici, peut être asynchrone si nécessaire
+                .block();
     }
 
-    // Classe interne pour formater la requête vers l'orchestrateur
+    private void notifyImageGenerated(String requestId, String generatedImage) {
+        try {
+            // Crée un message avec l'ID de requête et l'URL de l'image
+            ImageProcessedMessage message = new ImageProcessedMessage(requestId, generatedImage);
+            String messageJson = objectMapper.writeValueAsString(message);
+
+            // Envoie le message à la file 'imageGeneratedQueue'
+            jmsTemplate.convertAndSend("imageGeneratedQueue", messageJson);
+
+            // Journaliser l'envoi
+            System.out.println("Notified image generation for requestId: " + requestId);
+        } catch (Exception e) {
+            System.err.println("Erreur lors de l'envoi du message à imageGeneratedQueue : " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // Classe interne pour la requête à l'orchestrateur
     private static class OrchestratorRequest {
         private String requestId;
         private String generatedImage;
@@ -93,16 +117,8 @@ public class MessageConsumerService {
             return requestId;
         }
 
-        public void setRequestId(String requestId) {
-            this.requestId = requestId;
-        }
-
         public String getGeneratedImage() {
             return generatedImage;
-        }
-
-        public void setGeneratedImage(String generatedImage) {
-            this.generatedImage = generatedImage;
         }
     }
 }
