@@ -21,8 +21,10 @@ public class CardOrchestratorController {
     }
 
     @PostMapping("/response/text")
-    public ResponseEntity<String> receiveTextResponse(@RequestParam Long cardRequestId, @RequestBody String description) {
+    public ResponseEntity<String> receiveTextResponse(@RequestParam Long cardRequestId,
+            @RequestBody String description) {
         // Mettre à jour la demande de carte avec le texte généré
+        System.out.println("Received text description: " + description);
         cardOrchestratorService.updateTextAndTriggerImageRequest(cardRequestId, description);
         return ResponseEntity.ok("Text description received and image request triggered");
     }

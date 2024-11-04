@@ -3,11 +3,21 @@ package org.example.requestmanagementservice.service;
 import org.example.requestmanagementservice.entity.CardRequest;
 import org.example.requestmanagementservice.repository.CardRequestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class CardOrchestratorService {
@@ -33,6 +43,7 @@ public class CardOrchestratorService {
         // Initialiser cardRequestId et requestId dans les champs de classe
         this.cardRequestId = cardRequest.getId();
         this.requestId = UUID.randomUUID().toString();
+        System.out.println("Card request ID: " + cardRequestId + ", Request ID: " + requestId);
 
         // Lancer le traitement asynchrone de la demande
         new Thread(this::processCardRequest).start();
@@ -49,11 +60,28 @@ public class CardOrchestratorService {
                 return;
             }
 
-            // Appeler le service de génération de texte en premier
-            String textServiceUrl = "http://text-generation-service/api/generate";
-            restTemplate.postForObject(textServiceUrl + "?requestId=" + requestId + "&cardRequestId=" + cardRequestId, null, String.class);
+            // URL du service de génération de texte
+            String textServiceUrl = "http://localhost:8083/api/text";
 
-            // Ne pas encore appeler le service d'image ici ; il sera appelé via le contrôleur
+            // Préparer les en-têtes pour spécifier le type de contenu
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // Construire le corps de la requête JSON
+            Map<String, String> requestBody = new HashMap<>();
+            requestBody.put("requestId", requestId);
+            requestBody.put("cardRequestId", String.valueOf(cardRequestId));
+
+            // Construire l'objet HttpEntity avec les en-têtes et le corps de la requête
+            HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(requestBody, headers);
+
+            // Envoyer la requête au service de texte
+            ResponseEntity<String> response = restTemplate.postForEntity(textServiceUrl, requestEntity, String.class);
+
+            // Afficher la réponse pour vérification (facultatif)
+            System.out.println("Response from text service: " + response.getBody());
+            System.out.println("Response text : " + response.getBody());
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -70,12 +98,14 @@ public class CardOrchestratorService {
 
             // Utiliser le texte pour déclencher l'appel à l'API d'image
             String imageServiceUrl = "http://image-generation-service/api/generate";
-            restTemplate.postForObject(imageServiceUrl + "?cardRequestId=" + cardRequestId + "&text=" + description, null, String.class);
+            restTemplate.postForObject(imageServiceUrl + "?cardRequestId=" + cardRequestId + "&text=" + description,
+                    null, String.class);
         }
     }
 
     public void updateImage(Long cardRequestId, String imageUrl) {
-        // Mettre à jour l'URL de l'image dans la base de données et marquer la demande comme "COMPLETED"
+        // Mettre à jour l'URL de l'image dans la base de données et marquer la demande
+        // comme "COMPLETED"
         Optional<CardRequest> optionalCardRequest = cardRequestRepository.findById(cardRequestId);
         if (optionalCardRequest.isPresent()) {
             CardRequest cardRequest = optionalCardRequest.get();

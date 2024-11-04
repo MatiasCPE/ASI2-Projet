@@ -18,18 +18,20 @@ public class MessageConsumerService {
     @Value("${orchestrator.url}")
     private String orchestratorUrl;
 
-    public MessageConsumerService(ObjectMapper objectMapper) {
-        this.webClient = WebClient.builder().baseUrl("http://localhost:11434").build();// Ollama API base URL
+    @Value("${ollama.api.base-url}")
+    private String ollamaApiBaseUrl;
+
+    public MessageConsumerService(ObjectMapper objectMapper, @Value("${ollama.api.base-url}") String ollamaApiBaseUrl) {
+        this.webClient = WebClient.builder().baseUrl(ollamaApiBaseUrl).build(); // Utilisation de l'URL configurable
         this.objectMapper = objectMapper;
     }
 
     @JmsListener(destination = "textGenerationQueue")
-    public void consumeMessage(String messageJson) { // Recevoir JSON sous forme de String
+    public void consumeMessage(String messageJson) {
         try {
-            GenerationRequest request = objectMapper.readValue(messageJson, GenerationRequest.class); // Conversion JSON
-                                                                                                      // vers objet
+            GenerationRequest request = objectMapper.readValue(messageJson, GenerationRequest.class);
 
-            // Appel à Ollama pour générer le texte
+            // Appel au service Ollama pour générer le texte
             String generatedText = webClient.post()
                     .uri("/api/generate")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -38,7 +40,6 @@ public class MessageConsumerService {
                     .bodyToMono(String.class)
                     .block();
 
-            // Affichage du résultat
             System.out.println("Generated Text: " + generatedText);
 
         } catch (Exception e) {
@@ -47,18 +48,15 @@ public class MessageConsumerService {
     }
 
     public void sendToOrchestrator(String requestId, String generatedText) {
-        // Crée l'URL complète de l'orchestrateur en utilisant le endpoint pour recevoir
-        // les données
         webClient.post()
-                .uri(orchestratorUrl + "/response/text") // URL de l'orchestrateur à définir
+                .uri(orchestratorUrl + "/response/text")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(new OrchestratorRequest(requestId, generatedText))
                 .retrieve()
                 .bodyToMono(Void.class)
-                .block(); // Synchrone ici, peut être asynchrone si nécessaire
+                .block();
     }
 
-    // Classe interne pour formater la requête vers l'orchestrateur
     private static class OrchestratorRequest {
         private String requestId;
         private String generatedText;
@@ -67,11 +65,8 @@ public class MessageConsumerService {
             this.requestId = requestId;
             this.generatedText = generatedText;
         }
-
-        // Getters et Setters (peuvent être ajoutés si nécessaire)
     }
 
-    // Classe interne pour formater la requête vers Ollama
     private static class OllamaPromptRequest {
         @JsonProperty("model")
         private String model;
@@ -82,7 +77,6 @@ public class MessageConsumerService {
         @JsonProperty("stream")
         private boolean stream;
 
-        // Constructeur par défaut requis pour la sérialisation
         public OllamaPromptRequest() {
         }
 

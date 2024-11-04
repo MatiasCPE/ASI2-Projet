@@ -1,0 +1,109 @@
+version: '3.8'
+
+services:
+  # Service de génération de texte
+  text-generation-service:
+    build:
+      context: ./text-generation-service  # chemin vers le dossier du projet
+      dockerfile: Dockerfile              # le Dockerfile doit être dans le dossier
+    ports:
+      - "8082:8082"                       # expose le port 8082 sur l'hôte pour ce service
+    environment:
+      - SPRING_APPLICATION_NAME=text-generation-service
+      - SPRING_ACTIVEMQ_BROKER_URL=tcp://activemq:61616
+      - SPRING_ACTIVEMQ_USER=myuser
+      - SPRING_ACTIVEMQ_PASSWORD=mypwd
+      - SPRING_ACTIVEMQ_PACKAGES_TRUST_ALL=false
+      - SPRING_ACTIVEMQ_PACKAGES_TRUSTED=org.example.textgenerationservice.model
+      - ORCHESTRATOR_URL=http://request-management-service:7070
+      - SERVER_PORT=8082
+    depends_on:
+      - activemq
+      - db
+
+  # Service de gestion des demandes (orchestrator)
+  request-management-service:
+    build:
+      context: ./request-management-service
+      dockerfile: Dockerfile
+    ports:
+      - "7070:7070"                       # expose le port 7070 sur l'hôte pour ce service
+    environment:
+      - SPRING_APPLICATION_NAME=orchestrator-service
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/request_management_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_SHOW_SQL=true
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.MySQLDialect
+      - SPRING_ACTIVEMQ_BROKER_URL=tcp://activemq:61616
+      - SPRING_ACTIVEMQ_USER=myuser
+      - SPRING_ACTIVEMQ_PASSWORD=mypwd
+      - SERVER_PORT=7070
+    depends_on:
+      - activemq
+      - db
+
+  # Service de génération d'image
+  image-generation-service:
+    build:
+      context: ./image-generation-service
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8082"                       # expose le port 8081 sur l'hôte pour ce service (mappé vers 8082 dans le conteneur)
+    environment:
+      - SPRING_APPLICATION_NAME=image-generation-service
+      - SPRING_ACTIVEMQ_BROKER_URL=tcp://activemq:61616
+      - SPRING_ACTIVEMQ_USER=myuser
+      - SPRING_ACTIVEMQ_PASSWORD=mypwd
+      - SPRING_ACTIVEMQ_PACKAGES_TRUST_ALL=false
+      - SPRING_ACTIVEMQ_PACKAGES_TRUSTED=org.example.imagegenerationservice.model
+      - ORCHESTRATOR_URL=http://request-management-service:7070
+      - SERVER_PORT=8082
+      - NEURAL_LOVE_API_URL=http://localhost:8083
+      - NEURAL_LOVE_API_KEY=v1.b4495122f4e6d5cb4488e229a072762bf4b7f1bddae807a7795e82046b641b92
+    depends_on:
+      - activemq
+      - db
+
+  # Backend principal
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"                       # expose le port 8083 sur l'hôte pour ce service
+    environment:
+      - SERVER_PORT=8083
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=create
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.h2.Driver
+      - SPRING_DATASOURCE_URL=jdbc:h2:mem:db;DB_CLOSE_DELAY=-1
+      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_PASSWORD=sa
+    depends_on:
+      - activemq
+      - db
+
+  # Service ActiveMQ pour la messagerie
+  activemq:
+    image: rmohr/activemq:latest
+    ports:
+      - "61616:61616"  # port pour les connexions clients
+      - "8161:8161"    # interface web d'administration ActiveMQ
+
+  # Service MySQL pour la base de données
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: request_management_db
+      MYSQL_USER: root
+      MYSQL_PASSWORD: 
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
